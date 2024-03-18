@@ -1,0 +1,107 @@
+import SwiftUI
+
+struct ContentView: View {
+    @State private var displayValue = "0"
+    @State private var currentOperation: CalculatorOperation? = nil
+    @State private var operand: Double? = nil
+
+    let buttons: [[CalculatorButton]] = [
+        [.init(label: "7"), .init(label: "8"), .init(label: "9"), .init(label: "/", operation: .divide)],
+        [.init(label: "4"), .init(label: "5"), .init(label: "6"), .init(label: "*", operation: .multiply)],
+        [.init(label: "1"), .init(label: "2"), .init(label: "3"), .init(label: "-", operation: .subtract)],
+        [.init(label: "0"), .init(label: "C"), .init(label: "="), .init(label: "+", operation: .add)]
+    ]
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Text(displayValue)
+                .font(.largeTitle)
+                .padding()
+            ForEach(buttons, id: \.self) { row in
+                HStack(spacing: 10) {
+                    ForEach(row, id: \.self) { button in
+                        Button(button.label) {
+                            buttonTapped(button)
+                        }
+                        .font(.title)
+                        .frame(width: self.buttonWidth(), height: self.buttonHeight())
+                        .background(button.operation == nil ? Color.gray : Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(self.buttonHeight() / 2)
+                    }
+                }
+            }
+        }
+        .padding()
+    }
+    
+    private func buttonWidth() -> CGFloat {
+        (UIScreen.main.bounds.width - 5 * 12) / 4
+    }
+    
+    private func buttonHeight() -> CGFloat {
+        (UIScreen.main.bounds.width - 5 * 12) / 4
+    }
+    
+    private func buttonTapped(_ button: CalculatorButton) {
+        switch button.label {
+        case "0"..."9":
+            if displayValue == "0" {
+                displayValue = button.label
+            } else {
+                displayValue += button.label
+            }
+        case "+", "-", "*", "/":
+            operand = Double(displayValue)
+            currentOperation = button.operation
+            displayValue = "0"
+        case "=":
+            let secondOperand = Double(displayValue)!
+            if let firstOperand = operand, let operation = currentOperation {
+                let result = performOperation(firstOperand, secondOperand, operation)
+                displayValue = String(result)
+                operand = result
+            }
+        case "C":
+            displayValue = "0"
+            operand = nil
+            currentOperation = nil
+        default:
+            break
+        }
+    }
+    
+    private func performOperation(_ firstOperand: Double, _ secondOperand: Double, _ operation: CalculatorOperation) -> Double {
+        switch operation {
+        case .add:
+            return firstOperand + secondOperand
+        case .subtract:
+            return firstOperand - secondOperand
+        case .multiply:
+            return firstOperand * secondOperand
+        case .divide:
+            return firstOperand / secondOperand
+        }
+    }
+}
+
+struct CalculatorButton: Hashable {
+    let label: String
+    let operation: CalculatorOperation?
+    
+    init(label: String, operation: CalculatorOperation? = nil) {
+        self.label = label
+        self.operation = operation
+    }
+}
+
+enum CalculatorOperation {
+    case add, subtract, multiply, divide
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
